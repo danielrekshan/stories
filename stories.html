@@ -1,0 +1,49 @@
+<head>
+  <title>stories</title>
+  <style>
+    #container {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="container"></div>
+  {{> entry }}
+  {{> story }}
+</body>
+
+<template name="entry">
+  <p class="entry_inputs">
+    {{# with happening}}
+      <input type='hidden' id='selected_happening_id' value="{{_id}}">
+      <input type='text' id ='entry_name' placeholder='character name' value="{{name}}">
+      
+      <input type='number' min=1 max =100 id ='entry_name_size' placeholder='20' value="{{ defaultValue name_size 20}}">
+      
+      <input type='text' id='entry_context' placeholder='story content' value="{{context}}">
+
+      <input type='number' min=1 max =1000 id ='entry_x_position' placeholder='20' value="{{defaultValue x_position 12}}">
+      <input type='number' min=1 max =1000 id ='entry_y_position' placeholder='20' value="{{defaultValue y_position 12}}">
+      <span id="position_change">CHANGED </span>
+
+    {{/with}}
+  </p>
+  <input type="button" value="Add new" id="new_entry">
+
+
+</template>
+
+<template name='story'>
+  <div class='story'>
+    {{#each happenings}}
+      {{> happening}}
+    {{/each}}
+  </div<
+</template>
+
+<template name='happening'>
+  <h3>{{name}}</h3>
+  <p>{{context}}</p>
+</template>
