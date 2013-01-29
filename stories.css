@@ -1,1 +1,25 @@
 /* CSS declarations go here */
+.controls{
+  position: fixed;
+  left:20px;
+  z-index: 11;
+  width:200px;
+  height: 100%;
+  border: 1px solid black;
+  background: rgba(255, 255, 255, 0.9);
+  overflow: auto;
+}
+
+#container{
+  border: 1px solid black;
+  z-index: 1;
+}
+
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+.hidden {
+  display: none;
+}

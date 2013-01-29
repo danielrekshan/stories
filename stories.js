@@ -4,13 +4,14 @@ if (Meteor.isClient) {
   function drawHappenings() {
     var happenings = Happenings.find({})
     happenings.forEach(function(happening) {
-      drawHappening(happening)
+      Visualizer.drawHappening(happening)
     })
   }
 
   var startUpdateListener = function() {
     // Function called each time 'Shapes' is updated.
     var redrawCanvas = function() {
+
       var context = new Meteor.deps.Context()
       context.on_invalidate(redrawCanvas) // Ensures this is recalled for each update
       context.run(function() {
@@ -18,8 +19,9 @@ if (Meteor.isClient) {
       })
     }
     redrawCanvas()
+
   }
-  
+
   Meteor.startup(function() {
     startUpdateListener()
   })
@@ -63,6 +65,9 @@ if (Meteor.isClient) {
     var name_size = $('#entry_name_size').val();
     var x_position = $('#entry_x_position').val();
     var y_position = $('#entry_y_position').val();
+    var name_color = $('#entry_name_color').val();
+    var context_color = $('#entry_context_color').val();
+    var context_size = $('#entry_context_size').val();
 
 
     var happening_id = $('#selected_happening_id').val()
@@ -71,6 +76,9 @@ if (Meteor.isClient) {
     var new_attributes = {
       name:name, 
       context: context, 
+      name_color: name_color,
+      context_size: context_size,
+      context_color: context_color,
       time: ts, 
       name_size: name_size,
       x_position: x_position,
@@ -86,20 +94,33 @@ if (Meteor.isClient) {
 
     }
     happening = Happenings.findOne(happening_id)
-    drawHappening(happening)
+    Visualizer.drawHappening(happening)
+    Session.set('selected', happening._id);
   };
 
   Template.entry.new_entry = function () {
-    console.log('new entry')
     Session.set('selected', null)
-  }
+    $('#entry_x_position').val(Visualizer.apparent_center()[0]);
+    $('#entry_y_position').val(Visualizer.apparent_center()[1]);
+  };
+
+
 
   Template.entry.events = {
     'click #new_entry': function(){
       Template.entry.new_entry();
     },
+    'click #zoom_in': function(){
+      Visualizer.zoom(1.1);
+    },
+    'click #zoom_center': function(){
+      Visualizer.zoom_center();
+    },
+    'click #zoom_out': function(){
+      Visualizer.zoom(0.9);
+    },
     
-    'change #entry_name_size, change #entry_x_position, change #entry_y_position, click #position_change':function(){
+    'change .change_submit, click #position_change':function(){
       console.log('change')
       Template.entry.submit_entry();
     }
@@ -118,6 +139,7 @@ if (Meteor.isClient) {
   Template.story.events({
     'click': function () {
       Session.set('selected', this._id);
+      Visualizer.centerOn(this);
     }
   });
 

@@ -1,36 +1,45 @@
 <head>
   <title>stories</title>
-  <style>
-    #container {
-      border: 1px solid black;
-    }
-  </style>
 </head>
 
 <body>
-
+  <div class='controls'>
+    {{> entry }}
+    {{> story }}
+  </div>
   <div id="container"></div>
-  {{> entry }}
-  {{> story }}
 </body>
 
 <template name="entry">
+  
   <p class="entry_inputs">
     {{# with happening}}
       <input type='hidden' id='selected_happening_id' value="{{_id}}">
-      <input type='text' id ='entry_name' placeholder='character name' value="{{name}}">
-      
-      <input type='number' min=1 max =100 id ='entry_name_size' placeholder='20' value="{{ defaultValue name_size 20}}">
-      
-      <input type='text' id='entry_context' placeholder='story content' value="{{context}}">
+      <p>
+        <input type='text' id ='entry_name' placeholder='character name' value="{{name}}">
+        <br>
+        <input type='color' id='entry_name_color' value="{{defaultValue name_color '#000'}}" class='change_submit'>
+        <input type='number' min=1 max =10000 id ='entry_name_size' placeholder='20' value="{{ defaultValue name_size 20}}" class='change_submit'>
+      </p>
+      <p>
+        <input type='text' id='entry_context' placeholder='story content' value="{{context}}">
+        <br>
+        <input type='color' id='entry_context_color' value="{{defaultValue context_color '#000'}}" class='change_submit'>
+          <input type='number' min=1 max =10000 id ='entry_context_size' placeholder='20' value="{{ defaultValue context_size 10}}" class='change_submit'>
+      </p>
 
-      <input type='number' min=1 max =1000 id ='entry_x_position' placeholder='20' value="{{defaultValue x_position 12}}">
-      <input type='number' min=1 max =1000 id ='entry_y_position' placeholder='20' value="{{defaultValue y_position 12}}">
-      <span id="position_change">CHANGED </span>
+      <input type='number' min=1 max =1000 id ='entry_x_position' placeholder='20' value="{{defaultPosition x_position true}}" class='change_submit hidden'>
+
+      <input type='number' min=1 max =1000 id ='entry_y_position' placeholder='20' value="{{defaultPosition y_position false}}" class='change_submit hidden'>
+
+      <span id="position_change" class='hidden'></span>
 
     {{/with}}
   </p>
-  <input type="button" value="Add new" id="new_entry">
+  <input type="button" value="Add new" id="new_entry" class='zoom'>
+  <input type="button" value="zoom in" id="zoom_in" class='zoom'>
+  <input type="button" value="zoom center" id="zoom_center" class='zoom'>
+  <input type="button" value="zoom out" id="zoom_out" class='zoom'>
 
 
 </template>
@@ -45,5 +54,5 @@
 
 <template name='happening'>
   <h3>{{name}}</h3>
-  <p>{{context}}</p>
+  
 </template>
