@@ -54,67 +54,46 @@ var Visualizer = {
     });
     
   },
+  origin: {
+        x: 0,
+        y: 0
+  },
+  scale: 1,
+
   zoom: function (amount){
     Visualizer.hide_contexts();
-    var scale = window.stage.getScale();
-    var x = scale['x']*amount
-    var y = scale['y']*amount
-    // var old_x_pos = window.stage.getPosition()['x']
-    // var old_y_pos = window.stage.getPosition()['y']
+    // var scale = window.stage.getScale();
+    // var old_scale = scale['x']
+    // var newscale = scale['x']*amount
+    // var x = scale['x']*amount
+    // var y = scale['y']*amount
+  
 
-    // var old_apparent_width = window.stage.getWidth() * (1/scale['x']);
-    // var old_apparent_height = window.stage.getHeight() * (1/scale['y']);
-
-
-
-    // var to_scale = {x:x, y:y}
-
-
-    // // var new_apparent_width = window.stage.getWidth() * (1/x);
-    // // var new_apparent_height = window.stage.getHeight() * (1/y);
-    
-
-    // // var old_hyp = Math.sqrt(Math.pow(old_apparent_width, 2) + Math.pow(old_apparent_height, 2));
-    // // var new_hyp = Math.sqrt(Math.pow(new_apparent_width, 2) + Math.pow(new_apparent_height, 2));
-    // // var offset_hyp = (old_hyp/2)-(new_hyp/2)
-
-
-    // // var theta = Math.asin(old_apparent_height/old_hyp);
-    
-    // // var offset_x = Math.cos(theta) * offset_hyp;
-    // // var offset_y = Math.sin(theta) * offset_hyp;
-    // // console.log('offset_x: '+ offset_x)
-    // // console.log('offset_7: '+ offset_y)
-    // var target_x = old_x_pos + Visualizer.apparent_center()[0]
-    // var target_y = old_y_pos + Visualizer.apparent_center()[1]
-
-    // var target = [target_x, target_y];
-    // var x_pos = -(target[0] - window.center[0]) 
-    // var y_pos = -(target[1]*scale['y'] - window.center[1])
-    // console.log(x_pos)
+    var newscale = Visualizer.scale * amount;
+    var mx = Visualizer.apparent_center()[0];
+    var my = Visualizer.apparent_center()[1];
+    console.log(mx)
+    Visualizer.origin.x = mx / Visualizer.scale + Visualizer.origin.x - mx / newscale;
+    Visualizer.origin.y = my / Visualizer.scale + Visualizer.origin.y - my / newscale;
+    var offset_x = window.stage.getWidth()/2;
+    var offset_y = window.stage.getHeight()/2;
+    console.log('after')
+    window.vis = Visualizer.origin
     window.stage.transitionTo({
 
       duration: 0.5,
 
+      offset: {x:Visualizer.origin.x, y:Visualizer.origin.y},
       scale:{
-        x: x,
-        y: y
+        x: newscale,
+        y: newscale
       },
       callback: function(){
         Visualizer.show_contexts();
       }
 
     });
-    
-    // window.stage.transitionTo({
-    //   x: Visualizer.apparent_center[0],
-    //   y: Visualizer.apparent_center[1],
-    //   duration: 0.5
-    // });
-    
-    // window.stage.setPosition(offset_x, offset_y)
-    //window.center = [$(window).width()/2,$(window).height()/2]
-    
+   Visualizer.scale *= amount;
   },
   centerOn: function (happening) {
     Visualizer.hide_contexts();
@@ -125,6 +104,7 @@ var Visualizer = {
     window.stage.transitionTo({
       x: x,
       y: y,
+      offset: {x:0,y:0},
       duration: 0.5,
       callback: function(){
         Visualizer.show_contexts();
@@ -170,7 +150,7 @@ var Visualizer = {
     var font_size = happening.name_size / 2;
     var circ = Math.PI * (radius * 2);
 
-    var max_letters = circ / font_size;
+    var max_letters = circ / happening.context_size;
     var text = start_text.substring(0, max_letters);
     var numRadsPerLetter = 2 * Math.PI / text.length;
     var x = 0;
