@@ -9,9 +9,10 @@ if (Meteor.isClient) {
   }
 
   var startUpdateListener = function() {
+    // todo should only use this to gather new happenings in the story
+    // each story should get an auto run, so only it is updated when changed.
     // Function called each time 'Shapes' is updated.
     var redrawCanvas = function() {
-
       var context = new Meteor.deps.Context()
       context.on_invalidate(redrawCanvas) // Ensures this is recalled for each update
       context.run(function() {
@@ -86,10 +87,9 @@ if (Meteor.isClient) {
     }
 
     if (happening) {
-      console.log('yes')
+      
       Happenings.update(happening._id, { $set: new_attributes })
     } else {
-      console.log('new')
       var happening_id = Happenings.insert(new_attributes)
 
     }
@@ -121,7 +121,6 @@ if (Meteor.isClient) {
     },
     
     'change .change_submit, click #position_change':function(){
-      console.log('change')
       Template.entry.submit_entry();
     }
   };

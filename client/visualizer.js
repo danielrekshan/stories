@@ -41,16 +41,21 @@ var Visualizer = {
     return [x,y];
   },
   zoom_center: function (){
+    Visualizer.hide_contexts;
     window.stage.transitionTo({
       duration: 0.5,
       scale:{
         x: 1,
         y: 1
+      },
+      callback: function(){
+        Visualizer.show_contexts();
       }
     });
     
   },
   zoom: function (amount){
+    Visualizer.hide_contexts();
     var scale = window.stage.getScale();
     var x = scale['x']*amount
     var y = scale['y']*amount
@@ -94,6 +99,9 @@ var Visualizer = {
       scale:{
         x: x,
         y: y
+      },
+      callback: function(){
+        Visualizer.show_contexts();
       }
 
     });
@@ -109,6 +117,7 @@ var Visualizer = {
     
   },
   centerOn: function (happening) {
+    Visualizer.hide_contexts();
     var target = [happening.x_position, happening.y_position];
     var scale = window.stage.getScale();
     var x = -(target[0]*scale['x'] - window.center[0]) 
@@ -116,7 +125,10 @@ var Visualizer = {
     window.stage.transitionTo({
       x: x,
       y: y,
-      duration: 0.5
+      duration: 0.5,
+      callback: function(){
+        Visualizer.show_contexts();
+      }
     });
   },
   centerOnSelected: function () {
@@ -144,17 +156,20 @@ var Visualizer = {
     if (layer.get('#'+happening._id).length > 0) {
       layer.get('#'+happening._id)[0].remove();
     };
-    var group = new Kinetic.Group({id: happening._id+"_context"});
-    layer.add(group);
-    Visualizer.makeCircle(happening.context, happening, group);
+    
+    
+    Visualizer.makeCircle(happening.context, happening, layer);
+    
     window.stage.draw(layer)
   },
-  makeCircle: function (start_text, happening, group, radius) {
+  
+  generatePath: function(start_text, happening, radius, path) {
     if (radius == undefined) {
       var radius = ((happening.name.length/2)*happening.name_size);
     }
-    var font_size = happening.name_size / 2
+    var font_size = happening.name_size / 2;
     var circ = Math.PI * (radius * 2);
+
     var max_letters = circ / font_size;
     var text = start_text.substring(0, max_letters);
     var numRadsPerLetter = 2 * Math.PI / text.length;
@@ -163,48 +178,56 @@ var Visualizer = {
     var letter = false;
     var last_at_east = 0
 
+    
+    if (path == undefined) {
+      var path = [];
+    };
     for(var i=0;i<text.length;i++){
+
+
       x = (Math.cos(i*numRadsPerLetter) * (radius)) + parseInt(happening.x_position);
       y = (Math.sin(i*numRadsPerLetter) * (radius)) + parseInt(happening.y_position); 
-      if (i*numRadsPerLetter == 0)
+      
+      if (i > 0 && i*numRadsPerLetter == 0 ) {
         last_at_east = i;
+        radius += + font_size * 1.5;
+      }
       var diff = i - last_at_east
-      
       x = x - (font_size*1.5)*((text.length - diff)/text.length)
-      
-      letter = new Kinetic.Text({
-        fontFamily: 'Andale Mono, monospace',
-        x: x,
-        y: y,
-        text: text[i],
-        fontSize: happening.context_size,
-        rotation: i * numRadsPerLetter + 1.57, // right angle in rads
-        fill: happening.context_color,
-        name: "letters"
-      });
-      group.add(letter);
-    }
+      path.push({x:x,y:y})
+
+    };
     if (start_text.length > max_letters) {
       var new_text = start_text.substring(max_letters+1, start_text.length);
       var new_radius = radius + font_size * 1.5;
-      Visualizer.makeCircle(new_text, happening, group, new_radius);
-    }
+      Visualizer.generatePath(new_text, happening, new_radius, path);
+    };
+    return path;
   },
-  drawHappening: function (happening) {
+  makeCircle: function (start_text, happening, layer, radius) {
+    var path = Visualizer.generatePath(happening.context, happening, radius, [])
+    window.path = path
+    var lineFunction = d3.svg.line().x(function(d) { return d.x; }).y(function(d) { return d.y; }).interpolate("linear");
+    var path_data = lineFunction(path);
+    var textpath = new Kinetic.TextPath({
+        fill: happening.context_color,
+        fontSize: happening.context_size,
+        fontFamily: 'Andale Mono, monospace',
+        text: happening.context,
+        data: path_data
+      });
+    layer.add(textpath);
+  },
+  createHappening: function(happening) {
     if (window.stage.get('#'+happening._id).length > 0) {
       window.stage.get('#'+happening._id)[0].remove();
     }
-
     var new_layer = new Kinetic.Layer({name:'stories', draggable: true, id: happening._id});
-    new_layer.on('click, dragstart', function(){
+    new_layer.on('mousedown', function(){
       Session.set('selected', happening._id);
-      console.log(new_layer.getChildren())
-      console.log('remving group '+ happening._id)
-      if (new_layer.children.length > 0) {
-
-        new_layer.children[1].remove()
+      if (new_layer.children.length > 0 && happening.context.length > 500) {
+        new_layer.children[1].hide()
       }
-
     });
     new_layer.on('mousedown'), function(){
       window.stage.setDraggable(false);
@@ -225,7 +248,78 @@ var Visualizer = {
     window.stage.add(new_layer)
     Visualizer.drawName(happening);
     Visualizer.drawContext(happening);
+
     window.stage.draw(new_layer);
+  },
+  updateHappening: function (happening) {
+    var layer = window.stage.get('#'+happening._id)[0];
+    var name = layer.getChildren()[0];
+    var context = layer.getChildren()[1];
+
+    context.setFill(happening.context_color);
+    name.setFill(happening.name_color);
+    window.stage.draw(layer);
+  },
+
+  drawHappening: function (happening) {
+
+    //     if there is a layer
+    //   if need to redraw
+    //     redraw
+    //   else
+    //     update layer
+    // else
+    //   redraw layer
+    // end
+
+    var redraw = false;
+    if (window.stage.get('#'+happening._id).length > 0) {
+      var layer = window.stage.get('#'+happening._id)[0];
+      window.l = layer;
+      var old_name = layer.getChildren()[0].getText();
+      var old_name_size = parseInt(layer.getChildren()[0].getFontSize());
+      window.group = layer.getChildren()[1]
+      window.happening = happening
+      var old_context = layer.getChildren()[1].getText();
+      var old_context_size = parseInt(layer.getChildren()[1].getFontSize());
+
+      if (happening.name != old_name || happening.name_size != old_name_size){
+        redraw = true;
+      }
+      if (happening.context != old_context || happening.context_size != old_context_size){
+        redraw = true;
+      }
+      if (happening.x_position != layer.getChildren()[0].getX() || happening.y_position != layer.getChildren()[0].getY()) {
+        redraw = true;
+      }
+
+
+    } else {
+      redraw = true;
+    }
+
+    if (redraw) {
+      Visualizer.createHappening(happening);
+    } else {
+      Visualizer.updateHappening(happening);
+    }
+  },
+  hide_contexts: function(){
+    window.stage.children.forEach(function(layer){
+      if (layer.getChildren()[1].getText().length >100) {
+        layer.getChildren()[1].hide();
+      }
+      window.stage.draw(layer);
+    });
+  },
+  show_contexts: function(){
+    window.stage.children.forEach(function(layer){
+      if (layer.getChildren()[1].getText().length >100) {
+        layer.getChildren()[1].show();
+      }
+      window.stage.draw(layer);
+    });
+
   }
 };
 
@@ -246,6 +340,16 @@ Meteor.startup(function () {
   });
   window.stage.on('mouseout', function() {
     document.body.style.cursor = 'default';
+  });
+
+  window.stage.getContainer().addEventListener('mouseup', function(evt) {
+    console.log('dragend')
+    Visualizer.show_contexts();
+  });
+ 
+  window.stage.getContainer().addEventListener('mousedown', function(evt) {
+    console.log("CLICK")
+    Visualizer.hide_contexts();
   });
   $(window).resize(function() {
     Visualizer.updateContainer();
