@@ -1,3 +1,4 @@
+
 Happenings = new Meteor.Collection('happenings');
 
 if (Meteor.isClient) {
@@ -25,6 +26,16 @@ if (Meteor.isClient) {
 
   Meteor.startup(function() {
     startUpdateListener()
+    Accounts.ui.config({
+      requestPermissions: {
+        facebook: ['user_likes'],
+        github: ['user', 'repo']
+      },
+      requestOfflineToken: {
+        google: true
+      },
+      passwordSignupFields: 'USERNAME_AND_OPTIONAL_EMAIL'
+    });
   })
     ////////// Helpers for in-place editing //////////
   
@@ -75,12 +86,13 @@ if (Meteor.isClient) {
     var happening = Happenings.findOne(happening_id)
 
     var new_attributes = {
+      user_id: Meteor.userId(),
       name:name, 
       context: context, 
       name_color: name_color,
       context_size: context_size,
       context_color: context_color,
-      time: ts, 
+      time: ts,
       name_size: name_size,
       x_position: x_position,
       y_position: y_position

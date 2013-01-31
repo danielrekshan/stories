@@ -137,12 +137,59 @@ var Visualizer = {
       layer.get('#'+happening._id)[0].remove();
     };
     
-    
     Visualizer.makeCircle(happening.context, happening, layer);
     
     window.stage.draw(layer)
   },
-  
+  drawCircle: function (happening) {
+    var layer = window.stage.get('#'+happening._id)[0];
+    if (layer.get('#'+happening._id).length > 0) {
+      layer.get('#'+happening._id)[2].remove();
+    };
+    var name_radius = (happening.name.length/2)*happening.name_size;
+    var radius = Visualizer.findLargestRadius(happening);
+
+    var name_gradient = (name_radius/radius);
+    var circle = new Kinetic.Circle({
+        x: happening.x_position,
+        y: happening.y_position,
+        radius: radius,
+        fillRadialGradientStartPoint: 0,
+        fillRadialGradientStartRadius: 0,
+        fillRadialGradientEndPoint: 0,
+        fillRadialGradientEndRadius: radius,
+        fillRadialGradientColorStops: [0, happening.name_color, name_gradient, 'white', 0.9, happening.context_color, 1, 'white'],
+        // fill: 'red',
+        opacity: 0.5,
+        visible: false
+      });
+    layer.add(circle);
+    
+  },
+  findLargestRadius: function (happening) {
+    var radius = (happening.name.length/2)*happening.name_size;
+    var circ = Math.PI * (radius * 2);
+    var max_letters = circ / happening.context_size;
+    var not_found_largest = true;
+    var text = happening.context;
+    var i = 0
+    
+    while(text.length > 0) {
+      // console.log('text +' +text)
+      // console.log(' ')
+      i += 1
+      text = text.substring(max_letters+1, text.length);
+      if (text.length < max_letters) {
+        not_found_largest = false
+      }
+      radius += parseInt(happening.context_size)*1.15;
+      circ = Math.PI * (radius * 2);
+      max_letters = circ / happening.context_size;
+      
+    }
+    
+    return radius;
+  },
   generatePath: function(start_text, happening, radius, path) {
     if (radius == undefined) {
       var radius = ((happening.name.length/2)*happening.name_size);
@@ -158,7 +205,6 @@ var Visualizer = {
     var letter = false;
     var last_at_east = 0
 
-    
     if (path == undefined) {
       var path = [];
     };
@@ -206,12 +252,12 @@ var Visualizer = {
     new_layer.on('mousedown', function(){
       Session.set('selected', happening._id);
       if (new_layer.children.length > 0 && happening.context.length > 500) {
-        new_layer.children[1].hide()
+        new_layer.children[1].hide();
+
       }
     });
     new_layer.on('mousedown'), function(){
       window.stage.setDraggable(false);
-
     };
     new_layer.on('mouseup'), function(){
       window.stage.setDraggable(true);
@@ -228,6 +274,7 @@ var Visualizer = {
     window.stage.add(new_layer)
     Visualizer.drawName(happening);
     Visualizer.drawContext(happening);
+    Visualizer.drawCircle(happening);
 
     window.stage.draw(new_layer);
   },
@@ -238,6 +285,12 @@ var Visualizer = {
 
     context.setFill(happening.context_color);
     name.setFill(happening.name_color);
+
+    var color_stops = layer.children[2].getFillRadialGradientColorStops();
+    color_stops[1] = happening.name_color;
+    color_stops[5] = happening.context_color;
+    layer.children[2].setFillRadialGradientColorStops(color_stops);
+
     window.stage.draw(layer);
   },
 
@@ -286,17 +339,19 @@ var Visualizer = {
   },
   hide_contexts: function(){
     window.stage.children.forEach(function(layer){
-      if (layer.getChildren()[1].getText().length >100) {
-        layer.getChildren()[1].hide();
-      }
+      layer.getChildren()[0].hide();
+      layer.getChildren()[1].hide();
+      layer.getChildren()[2].show();
+      
       window.stage.draw(layer);
     });
   },
   show_contexts: function(){
     window.stage.children.forEach(function(layer){
-      if (layer.getChildren()[1].getText().length >100) {
-        layer.getChildren()[1].show();
-      }
+      layer.getChildren()[0].show();
+      layer.getChildren()[1].show();
+      layer.getChildren()[2].hide();
+      
       window.stage.draw(layer);
     });
 

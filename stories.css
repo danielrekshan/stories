@@ -23,3 +23,13 @@ body {
 .hidden {
   display: none;
 }
+
+.loginButtons {
+  position: fixed;
+  right:10px;
+  float: right; 
+  margin-right:20px;
+  padding:10px;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 11;
+}
