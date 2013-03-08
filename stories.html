@@ -9,16 +9,25 @@
       {{loginButtons align="right"}}
     </div>
   </div>
+  
+
   <div class='controls'>
-    {{> story }}
+    {{> stories }}
+    {{> selected_story }}
     {{> entry }}
     {{> legend }}
   </div>
   <div id="container"></div>
 </body>
 
+<template name="stories">
+  <div id="stories">
+    {{#each stories}}
+      {{> story}}
+    {{/each}}
+  </div>
+</template>
 <template name="entry">
-  
   <p class="entry_inputs">
     {{# with happening}}
       <input type='hidden' id='selected_happening_id' value="{{_id}}">
@@ -58,16 +67,18 @@
     {{/each}}
   </div>
 </template>
-
 <template name='story'>
-  {{# with story}}
-    name:<h3>{{name}}</h3>
-  {{/with}}
-  
+    <p>{{name}}</p>
+</template>
+
+<template name='selected_story'>
+  <p>
+    {{# with story}}
+      <input type='text' id ='story_name' placeholder='story name' value="{{name}}">
+    {{/ with}}
+  </p>
 </template>
 
 <template name='happening'>
   <h3>{{name}}</h3>
-  **story-id: {{story_id}}
-  
 </template>

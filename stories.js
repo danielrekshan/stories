@@ -4,11 +4,12 @@ Stories = new Meteor.Collection('stories');
 
 if (Meteor.isClient) {
   function newStory() {
-    var story_id = Stories.insert({'user_id': Meteor.userId()});
+    var story_id = Stories.insert({'name':'new story', 'user_id': Meteor.userId()});
     console.log("NEW STORY ID: "+story_id)
     Session.set('story_id', story_id);
     Template.entry.new_entry();
-    window.stage.reset()
+    window.stage.reset();
+    window.stage.setDraggable(true);
   }
 
   function drawHappenings() {
@@ -38,8 +39,14 @@ if (Meteor.isClient) {
   Meteor.startup(function() {
     if (Session.get('story_id') == undefined) {
       console.log("undefined new stroy, creating")
-      var story = Stories.findOne({});
-      Sessiong.set('story_id', story._id);
+      var story = Stories.findOne();
+      conosle.log(story)
+      if (story) {
+        Session.set('story_id', story._id);
+      } else {
+        // var story_id = Stories.insert({'name':'new story', 'user_id': Meteor.userId()});
+        // Session.set('story_id', story_id);
+      }
     }
     $('#new_story').on('click', function(){
       newStory();
@@ -87,6 +94,13 @@ if (Meteor.isClient) {
     };
   };
 
+  Template.story.update_name = function () {
+    var name = $('#story_name').val();
+    console.log("updating name: " + name);
+    var story_id = Session.get('story_id');
+    Stories.update(story_id, { name: name })
+  }
+
   Template.entry.happening = function () {
     return Happenings.findOne(Session.get("selected"));
   };
@@ -102,13 +116,12 @@ if (Meteor.isClient) {
     var context_color = $('#entry_context_color').val();
     var context_size = $('#entry_context_size').val();
 
-
     var happening_id = $('#selected_happening_id').val()
     var happening = Happenings.findOne(happening_id)
 
     var new_attributes = {
       user_id: Meteor.userId(),
-      story_id: Template.story.story()._id,
+      story_id: Template.selected_story.story()._id,
       name:name, 
       context: context, 
       name_color: name_color,
@@ -140,7 +153,6 @@ if (Meteor.isClient) {
 
 
   Template.entry.events = {
-
     'click #new_entry': function(){
       Template.entry.new_entry();
     },
@@ -157,6 +169,13 @@ if (Meteor.isClient) {
       Template.entry.submit_entry();
     }
   };
+
+  Template.selected_story.events = {
+    'change #story_name': function () {
+      console.log('change name')
+      Template.story.update_name();
+    }
+  }
 
   Template.entry.events[okcancel_events('.entry_inputs input')] = make_okcancel_handler({
     ok: function () {
@@ -176,7 +195,23 @@ if (Meteor.isClient) {
     }
   });
 
-  Template.story.story = function () {
+  Template.stories.events({
+    'click': function () {
+      Session.set('story_id', this._id);
+      window.stage.reset();
+      window.stage.setDraggable(true);
+      drawHappenings();
+      console.log("clicked!")
+      
+    }
+  });
+
+  Template.stories.stories = function () {
+    var stories = Stories.find();
+    return stories;
+  };
+
+  Template.selected_story.story = function () {
     // if (Stories.findOne({}) == undefined) {
     //   Stories.insert({name: 'first story', user_id: Meteor.userId()});
     //   return Stories.findOne({});
