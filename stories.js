@@ -1,9 +1,20 @@
 
 Happenings = new Meteor.Collection('happenings');
+Stories = new Meteor.Collection('stories');
 
 if (Meteor.isClient) {
+  function newStory() {
+    var story_id = Stories.insert({'user_id': Meteor.userId()});
+    console.log("NEW STORY ID: "+story_id)
+    Session.set('story_id', story_id);
+    Template.entry.new_entry();
+    window.stage.reset()
+  }
+
   function drawHappenings() {
-    var happenings = Happenings.find({})
+    var story_id = Session.get('story_id');
+    console.log("DH, story_id: " + story_id)
+    var happenings = Happenings.find({story_id:Session.get('story_id')})
     happenings.forEach(function(happening) {
       Visualizer.drawHappening(happening)
     })
@@ -25,6 +36,14 @@ if (Meteor.isClient) {
   }
 
   Meteor.startup(function() {
+    if (Session.get('story_id') == undefined) {
+      console.log("undefined new stroy, creating")
+      var story = Stories.findOne({});
+      Sessiong.set('story_id', story._id);
+    }
+    $('#new_story').on('click', function(){
+      newStory();
+    });
     startUpdateListener()
     Accounts.ui.config({
       requestPermissions: {
@@ -36,6 +55,8 @@ if (Meteor.isClient) {
       },
       passwordSignupFields: 'USERNAME_AND_OPTIONAL_EMAIL'
     });
+
+
   })
     ////////// Helpers for in-place editing //////////
   
@@ -87,6 +108,7 @@ if (Meteor.isClient) {
 
     var new_attributes = {
       user_id: Meteor.userId(),
+      story_id: Template.story.story()._id,
       name:name, 
       context: context, 
       name_color: name_color,
@@ -98,8 +120,7 @@ if (Meteor.isClient) {
       y_position: y_position
     }
 
-    if (happening) {
-      
+    if (happening) {      
       Happenings.update(happening._id, { $set: new_attributes })
     } else {
       var happening_id = Happenings.insert(new_attributes)
@@ -119,6 +140,7 @@ if (Meteor.isClient) {
 
 
   Template.entry.events = {
+
     'click #new_entry': function(){
       Template.entry.new_entry();
     },
@@ -131,7 +153,6 @@ if (Meteor.isClient) {
     'click #zoom_out': function(){
       Visualizer.zoom(0.9);
     },
-    
     'change .change_submit, click #position_change':function(){
       Template.entry.submit_entry();
     }
@@ -143,22 +164,42 @@ if (Meteor.isClient) {
     }
   });
 
-  Template.story.happenings = function () {
-    return Happenings.find({}, {sort: {time: -1} })
+  Template.legend.happenings = function () {
+    var story_id = Session.get('story_id');
+    return Happenings.find({'story_id':story_id}, {sort: {time: -1} })
   };
 
-  Template.story.events({
+  Template.legend.events({
     'click': function () {
       Session.set('selected', this._id);
       Visualizer.centerOn(this);
     }
   });
 
+  Template.story.story = function () {
+    // if (Stories.findOne({}) == undefined) {
+    //   Stories.insert({name: 'first story', user_id: Meteor.userId()});
+    //   return Stories.findOne({});
+    // }
+    console.log("story id: "+Session.get("story_id"))
+    var story_id = Session.get('story_id');
+    if (story_id) {
+      var story = Stories.findOne(story_id);
+    } else {
+      var story = Stories.findOne({});
+    }
+
+    
+    if (story) {
+      Session.set('story_id', story._id);
+    }
+    Session.set('story', story);
+    return story;
+  }
+
 }
 
 if (Meteor.isServer) {
   Meteor.startup(function () {
-    
-    
   });
 }

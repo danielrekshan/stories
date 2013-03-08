@@ -3,13 +3,16 @@
 </head>
 
 <body>
-  <div class='loginButtons'>
-    {{loginButtons align="right"}}
+  <div class='header'>
+    <input type="button" value="New Story" id="new_story" class=''>
+    <div class='loginButtons'>
+      {{loginButtons align="right"}}
+    </div>
   </div>
   <div class='controls'>
-
-    {{> entry }}
     {{> story }}
+    {{> entry }}
+    {{> legend }}
   </div>
   <div id="container"></div>
 </body>
@@ -48,15 +51,23 @@
 
 </template>
 
-<template name='story'>
+<template name='legend'>
   <div class='story'>
     {{#each happenings}}
       {{> happening}}
     {{/each}}
-  </div<
+  </div>
+</template>
+
+<template name='story'>
+  {{# with story}}
+    name:<h3>{{name}}</h3>
+  {{/with}}
+  
 </template>
 
 <template name='happening'>
   <h3>{{name}}</h3>
+  **story-id: {{story_id}}
   
 </template>
